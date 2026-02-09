@@ -20,13 +20,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r module3/milestone2/app/requirements.txt
 
       - name: Run tests
-        run: |
-          cd module3/milestone2
-          PYTHONPATH=. pytest -v
+        working-directory: module3/milestone2
+        env:
+          PYTHONPATH: .
+        run: pytest -v
 
   build_and_push:
     needs: test
@@ -38,16 +39,13 @@ jobs:
 
       - name: Log in to registry
         run: |
-          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login "${{ secrets.REGISTRY_URL }}" \
-            -u "${{ secrets.REGISTRY_USER }}" --password-stdin
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login "${{ secrets.REGISTRY_URL }}" -u "${{ secrets.REGISTRY_USER }}" --password-stdin
 
       - name: Build Docker image
+        working-directory: module3/milestone2
         run: |
-          cd module3/milestone2
-          docker build \
-            -t ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NAMESPACE }}/ml-service:${{ github.ref_name }} .
+          docker build -t ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NAMESPACE }}/ml-service:${{ github.ref_name }} .
 
       - name: Push Docker image
         run: |
-          docker push \
-            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NAMESPACE }}/ml-service:${{ github.ref_name }}
+          docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NAMESPACE }}/ml-service:${{ github.ref_name }}
