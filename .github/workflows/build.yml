@@ -20,12 +20,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r module3/milestone2/app/requirements.txt
+          cd module3/milestone2/app
+          pip install -r requirements.txt
 
       - name: Run tests
-        working-directory: module3/milestone2
         run: |
-          PYTHONPATH=. pytest
+          cd module3/milestone2
+          pytest
+
 
   build:
     needs: test
@@ -34,7 +36,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        working-directory: module3/milestone2
+      - name: Log in to Docker Hub
         run: |
-          docker build -t ml-service:${{ github.ref_name }} .
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ml-service:${{ github.ref_name }} module3/milestone2
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ml-service:${{ github.ref_name }}
